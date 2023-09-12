@@ -1,19 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
+import "./Candidate.sol";
+
 contract Voting {
     // Track Voter Registration
     mapping(address => bool) public voters;
     // Track Voters Voted
     mapping(address => bool) public hasVoted;
     // Track Candidates
-    mapping(address => Candidate) public candidates;
-
-    struct Candidate {
-        address candidateAddress;
-        string name;
-        uint voteCount;
-    }
+    Candidate[] public candidateList;
     // Track Votes Tally
     uint public totalVotes;
     // Contract Owner
@@ -50,30 +46,23 @@ contract Voting {
     }
 
     // Add Candidate
-    function addCandidate(
-        address candidateAddress,
-        string memory name
-    ) public isEC {
+    function addCandidate(string memory _name) public isEC {
         // Add Candidate
-        candidates[candidateAddress] = Candidate(candidateAddress, name, 0);
+        Candidate newCandidate = new Candidate(_name);
+        candidateList.push(newCandidate);
     }
 
     // Vote
-    function vote(address candidateAddress) public {
+    function vote(uint256 _candidateIndex) public {
         // Check if voter is registered
         require(voters[msg.sender], "Voter is not registered!");
         // Check if voter has not voted
         require(!hasVoted[msg.sender], "Voter has already voted!");
         // Check if candidate is valid
-        require(
-            candidates[candidateAddress].candidateAddress == candidateAddress,
-            "Candidate not valid!"
-        );
+        require(_candidateIndex < candidateList.length, "Candidate not valid!");
+        // Increase total votes
+        totalVotes += 1;
         // Increase candidate vote
-        candidates[candidateAddress].voteCount++;
-        // Mark voter as voted
-        voters[msg.sender] = true;
-        // Increase the vote tally
-        totalVotes++;
+        Candidate(address(candidateList[_candidateIndex])).incrementVoteCount();
     }
 }
